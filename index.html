@@ -20,12 +20,36 @@
             bottom: 0;
             width: 100%;
         }
+
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1;
+            max-height: calc(100vh - 50px);
+            overflow-y: auto;
+            max-width: 200px;
+
+            display:flex;
+            flex-direction: column;
+            gap:10px;
+        }
     </style>
 </head>
 
 <body>
+
+    <div id="info"></div>
     <div id="map"></div>
     <script>
+        const infoDiv = document.getElementById('info');
+        const appData = {
+            selectedRegion: ""
+        }
         mapboxgl.accessToken = 'pk.eyJ1Ijoic2VyaHV6IiwiYSI6ImNseXpvc3RlczJpbnIya3FscDU2aHc5d3EifQ.FHtPjde_lqensSHZxqthgw';
         const map = new mapboxgl.Map({
             container: 'map',
@@ -83,7 +107,6 @@
                         );
                     }
                     hoveredPolygonId = e.features[0].id;
-                    console.log('hoveredPolygonId', hoveredPolygonId);
                     map.setFeatureState(
                         { source: 'regions', id: hoveredPolygonId },
                         { hover: true }
@@ -91,8 +114,6 @@
                 }
             });
 
-            // When the mouse leaves the state-fill layer, update the feature state of the
-            // previously hovered feature.
             map.on('mouseleave', 'regions-fills', () => {
                 if (hoveredPolygonId !== null) {
                     map.setFeatureState(
@@ -103,7 +124,18 @@
                 hoveredPolygonId = null;
             });
 
-            fetch('UK-merged.geojson')
+            map.on('click', 'regions-fills', (e) => {
+                const feature = e.features[0];
+                console.log('clicked feature', feature);
+                const region = feature.properties['region'];
+                appData.selectedRegion = region;
+                buildInfoPanel({
+                    region,
+                    data: appData.csvData
+                });
+            });
+
+            fetch('UK-merged.json')
                 .then(response => response.json())
                 .then(json => {
                     console.log('json', json);
@@ -116,13 +148,45 @@
 
             d3.csv("The Requirement List - House builders.csv").then(function (data) {
                 console.log(data);
-                const regions = data.map(d => d.Regions.split(/[,;]/).map(r => r.toLowerCase().trim())).flat();
-
+                const regions = data.map(d => d['Regions 2'].split(/[,;]/).map(r => r.toLowerCase().trim())).flat();
                 const uniqueRegions = [...new Set(regions)];
                 console.log('regions', uniqueRegions);
+
+
+                appData.csvData = data.map(el => {
+                    const regions = el['Regions 2'].split(/[,;]/).map(r => r.toLowerCase().trim());
+                    return {
+                        ...el,
+                        regions
+                    }
+                });
+            });
+        });
+
+
+        function buildInfoPanel({
+            region, data
+        }) {
+
+            infoDiv.innerHTML = ``;
+
+            const regionData = data.filter(d => d.regions.includes(region.toLowerCase()));
+
+            const regionTitle = document.createElement('span');
+            regionTitle.textContent = region;
+            regionTitle.style.fontWeight = 'bold';
+            infoDiv.appendChild(regionTitle);
+
+
+            regionData.forEach(d => {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <a href="https://www.therequirementlist.com/house-builders/${d['Slug']}">${d['Name']}</a>
+                `;
+                infoDiv.appendChild(div);
             });
 
-        });
+        }
     </script>
 
 </body>
