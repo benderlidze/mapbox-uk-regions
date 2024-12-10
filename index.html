@@ -8,6 +8,8 @@
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.8.0/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.8.0/mapbox-gl.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
     <style>
         body {
             margin: 0;
@@ -34,9 +36,9 @@
             overflow-y: auto;
             max-width: 200px;
 
-            display:flex;
+            display: flex;
             flex-direction: column;
-            gap:10px;
+            gap: 10px;
         }
     </style>
 </head>
@@ -48,7 +50,8 @@
     <script>
         const infoDiv = document.getElementById('info');
         const appData = {
-            selectedRegion: ""
+            selectedRegion: "",
+            clusters: new Map()
         }
         mapboxgl.accessToken = 'pk.eyJ1Ijoic2VyaHV6IiwiYSI6ImNseXpvc3RlczJpbnIya3FscDU2aHc5d3EifQ.FHtPjde_lqensSHZxqthgw';
         const map = new mapboxgl.Map({
@@ -61,7 +64,7 @@
         });
         let hoveredPolygonId = null;
 
-        map.on('load', () => {
+        map.on('load', async () => {
 
             map.addSource('regions', {
                 'type': 'geojson',
@@ -97,6 +100,37 @@
                     'line-width': 1
                 }
             });
+
+
+            map.addSource('clusters', {
+                'type': 'geojson',
+                'data': {
+                    'type': 'FeatureCollection',
+                    'features': []
+                }
+            });
+            map.addLayer({
+                'id': 'clusters',
+                'type': 'circle',
+                'source': 'clusters',
+                'paint': {
+                    'circle-color': '#627BC1',
+                    'circle-radius': 15
+                }
+            });
+            map.addLayer({
+                'id': 'clusters-labels',
+                'type': 'symbol',
+                'source': 'clusters',
+                'layout': {
+                    'text-field': ['get', 'counter'],
+                    'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+                    'text-size': 14
+                },
+                'paint': {
+                    'text-color': '#FFFFFF'
+                }
+            })
 
             map.on('mousemove', 'regions-fills', (e) => {
                 if (e.features.length > 0) {
@@ -135,31 +169,74 @@
                 });
             });
 
-            fetch('UK-merged.json')
+
+            await fetch('UK-merged.json')
                 .then(response => response.json())
                 .then(json => {
                     console.log('json', json);
-                    json.features = json.features.map((feature, index) => ({
-                        ...feature,
-                        id: feature.properties.OBJECTID || index
-                    }));
+
+
+                    json.features = json.features.map((feature, index) => {
+
+                        const region = feature.properties['region'].toLowerCase();
+                        console.log('region', region);
+                        const cluster = appData.clusters.get(region)
+                        if (!cluster) {
+                            appData.clusters.set(region, {
+                                center: turf.centerOfMass(feature).geometry.coordinates,
+                                counter: 0
+                            })
+                        }
+
+                        return {
+                            ...feature,
+                            id: feature.properties.OBJECTID || index,
+                        }
+                    });
+                    console.log('json', json);
                     map.getSource('regions').setData(json);
                 })
 
             d3.csv("The Requirement List - House builders.csv").then(function (data) {
                 console.log(data);
-                const regions = data.map(d => d['Regions 2'].split(/[,;]/).map(r => r.toLowerCase().trim())).flat();
-                const uniqueRegions = [...new Set(regions)];
-                console.log('regions', uniqueRegions);
+                // const regions = data.map(d => d['Regions 2'].split(/[,;]/).map(r => r.toLowerCase().trim())).flat();
+                // const uniqueRegions = [...new Set(regions)];
+                // console.log('regions', uniqueRegions);
 
 
                 appData.csvData = data.map(el => {
                     const regions = el['Regions 2'].split(/[,;]/).map(r => r.toLowerCase().trim());
+                    regions.forEach(region => {
+                        const cluster = appData.clusters.get(region)
+                        if (cluster) {
+                            cluster.counter++;
+                        }
+                    });
                     return {
                         ...el,
                         regions
                     }
                 });
+
+                //build geometry clusters
+                const clusterFeatures = Array.from(appData.clusters.entries()).map(([region, cluster]) => {
+                    return {
+                        type: 'Feature',
+                        properties: {
+                            region,
+                            counter: cluster.counter
+                        },
+                        geometry: {
+                            type: 'Point',
+                            coordinates: cluster.center
+                        }
+                    }
+                });
+                map.getSource('clusters').setData({
+                    type: 'FeatureCollection',
+                    features: clusterFeatures
+                });
+
             });
         });
 
