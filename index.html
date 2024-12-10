@@ -7,6 +7,7 @@
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.8.0/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.8.0/mapbox-gl.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -112,6 +113,15 @@
                     }));
                     map.getSource('regions').setData(json);
                 })
+
+            d3.csv("The Requirement List - House builders.csv").then(function (data) {
+                console.log(data);
+                const regions = data.map(d => d.Regions.split(/[,;]/).map(r => r.toLowerCase().trim())).flat();
+
+                const uniqueRegions = [...new Set(regions)];
+                console.log('regions', uniqueRegions);
+            });
+
         });
     </script>
 
