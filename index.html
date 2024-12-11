@@ -14,7 +14,11 @@
         body {
             margin: 0;
             padding: 0;
+            font-family: Inter, sans-serif;
+            font-size: 0.8rem;
         }
+
+
 
         #map {
             position: absolute;
@@ -24,17 +28,20 @@
         }
 
         #info {
+
             position: absolute;
             top: 10px;
             left: 10px;
+            z-index: 10;
             background-color: white;
             padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            z-index: 1;
+            max-width: 270px;
+            border-radius: 10px;
+            box-shadow: rgba(0, 0, 0, 0.1) 0px 10px 50px;
+
             max-height: calc(100vh - 50px);
             overflow-y: auto;
-            max-width: 200px;
+            width: 200px;
 
             display: flex;
             flex-direction: column;
@@ -176,7 +183,6 @@
                 .then(json => {
                     console.log('json', json);
 
-
                     json.features = json.features.map((feature, index) => {
 
                         const region = feature.properties['region'].toLowerCase();
@@ -251,9 +257,18 @@
             const regionData = data.filter(d => d.regions.includes(region.toLowerCase()));
 
             const regionTitle = document.createElement('span');
-            regionTitle.textContent = region;
+            regionTitle.textContent = region.replace("-", " ")
             regionTitle.style.fontWeight = 'bold';
+            regionTitle.style.fontSize = '1.2rem';
+            
+            regionTitle.style.textTransform = 'capitalize';
+
+            const infoText = document.createElement('span');
+            infoText.textContent = `Click to view requirements`;
+
+
             infoDiv.appendChild(regionTitle);
+            infoDiv.appendChild(infoText);
 
 
             regionData.forEach(d => {
