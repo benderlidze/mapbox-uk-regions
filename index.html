@@ -308,10 +308,8 @@
 
                     .map(s => {
                         if (!s || s === "") return "";
-                        console.log('s', s);
                         const color = colors[s] || "#000000";
-                        console.log('color', color);
-                        return `<div class="sector" style="background-color:${color}">${s.slice(0, 4)}</div>`
+                        return `<div class="sector" style="background-color:${color}">${s}</div>`
                     }).join("")
 
 
