@@ -41,11 +41,29 @@
 
             max-height: calc(100vh - 50px);
             overflow-y: auto;
-            width: 200px;
+            /* width: 200px; */
 
             display: flex;
             flex-direction: column;
             gap: 10px;
+        }
+
+        .item {
+            display: flex;
+            align-items: center;
+        }
+
+        .sectors-container {
+            display: flex;
+            gap: 2px;
+        }
+
+        .sector {
+            padding: 3px 5px;
+            border-radius: 5px;
+            margin: 5px;
+            display: inline-block;
+            background-color: #ffda4a;
         }
     </style>
 </head>
@@ -260,7 +278,7 @@
             regionTitle.textContent = region.replace("-", " ")
             regionTitle.style.fontWeight = 'bold';
             regionTitle.style.fontSize = '1.2rem';
-            
+
             regionTitle.style.textTransform = 'capitalize';
 
             const infoText = document.createElement('span');
@@ -270,11 +288,38 @@
             infoDiv.appendChild(regionTitle);
             infoDiv.appendChild(infoText);
 
+            colors = {
+                "Care": "#00a6a6",
+                "Residential": "#ffda4a",
+                "Commercial": "#ff00ff",
+                "Mixed Use": "#4a4aff",
+                "Mixed": "#4a4aff",
+                "Retail": "#ff0000",
+            }
+
+
 
             regionData.forEach(d => {
                 const div = document.createElement('div');
+
+                console.log('d', d);
+                const sectors = d['Sector'].split(/[,;]/).map(s => s.trim());
+                const sectorsDiv = sectors
+
+                    .map(s => {
+                        if (!s || s === "") return "";
+                        console.log('s', s);
+                        const color = colors[s] || "#000000";
+                        console.log('color', color);
+                        return `<div class="sector" style="background-color:${color}">${s.slice(0, 4)}</div>`
+                    }).join("")
+
+
                 div.innerHTML = `
-                    <a target="_blank" style="color:black" href="https://www.therequirementlist.com/house-builders/${d['Slug']}">${d['Name']}</a>
+                    <div class="item">
+                        <a target="_blank" style="color:black" href="https://www.therequirementlist.com/house-builders/${d['Slug']}">${d['Name']}</a>
+                        <div class="sectors-container">${sectorsDiv}</div>
+                    </div>
                 `;
                 infoDiv.appendChild(div);
             });
