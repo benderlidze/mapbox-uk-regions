@@ -54,14 +54,14 @@
         }
 
         .sectors-container {
+            margin: 5px;
             display: flex;
-            gap: 2px;
+            gap: 4px;
         }
 
         .sector {
             padding: 3px 5px;
             border-radius: 5px;
-            margin: 5px;
             display: inline-block;
             background-color: #ffda4a;
             align-self: flex-start;
@@ -290,14 +290,13 @@
             infoDiv.appendChild(infoText);
 
             colors = {
-                "Care": "#00a6a6",
-                "Residential": "#ffda4a",
-                "Commercial": "#ff00ff",
-                "Mixed Use": "#4a4aff",
-                "Mixed": "#4a4aff",
-                "Retail": "#ff0000",
+                "Care": { color: "#00a6a6", name: "Care" },
+                "Residential": { color: "#ffda4a", name: "Resi" },
+                "Commercial": { color: "#ff00ff", name: "Commercial" },
+                "Mixed Use": { color: "#4a4aff", name: "Mixed" },
+                "Mixed": { color: "#4a4aff", name: "Mixed" },
+                "Retail": { color: "#ff0000", name: "Retail" },
             }
-
 
 
             regionData.forEach(d => {
@@ -309,8 +308,9 @@
 
                     .map(s => {
                         if (!s || s === "") return "";
-                        const color = colors[s] || "#000000";
-                        return `<div class="sector" style="background-color:${color}">${s}</div>`
+                        const color = colors[s].color || "#000000";
+                        const name = colors[s].name || s;
+                        return `<div class="sector" style="background-color:${color}">${name}</div>`
                     }).join("")
 
 
